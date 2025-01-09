@@ -32,9 +32,9 @@ Follow these instructions to set up and run the project locally or host it onlin
 
 ### Installation
 
-1.  Clone this repository:  `git clone https://github.com/<your-username>/<your-repo-name>.git`
+1.  Clone this repository:  `git clone https://github.com/<username>/<repo-name>.git`
     
-2.  Navigate to the project folder:  `cd <your-repo-name>`
+2.  Navigate to the project folder:  `cd <repo-name>`
     
 3.  Open the `index.html` file in your browser.
 
