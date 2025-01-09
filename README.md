@@ -1,5 +1,3 @@
-* * *
-
 Task Tracker
 ============
 
@@ -34,47 +32,11 @@ Follow these instructions to set up and run the project locally or host it onlin
 
 ### Installation
 
-1.  Clone this repository:
+1.  Clone this repository:  `git clone https://github.com/<your-username>/<your-repo-name>.git`
     
-    bash
-    
-    Copy code
-    
-    `git clone https://github.com/<your-username>/<your-repo-name>.git`
-    
-2.  Navigate to the project folder:
-    
-    bash
-    
-    Copy code
-    
-    `cd <your-repo-name>`
+2.  Navigate to the project folder:  `cd <your-repo-name>`
     
 3.  Open the `index.html` file in your browser.
-
-### Hosting on GitHub Pages
-
-1.  Push the project to a GitHub repository.
-2.  Enable GitHub Pages from the repository settings:
-    *   Go to **Settings** > **Pages**.
-    *   Select the branch and folder (`root`) to host the project.
-3.  Access your hosted site at:
-    
-    php
-    
-    Copy code
-    
-    `https://<your-username>.github.io/<your-repo-name>/`
-    
-
-File Structure
---------------
-
-bash
-
-Copy code
-
-`/ (root directory)   ├── index.html      # Main HTML file   ├── chart.js        # Chart.js script   ├── README.md       # Project documentation   ├── style.css       # Custom CSS for the application (if applicable)`
 
 Usage
 -----
