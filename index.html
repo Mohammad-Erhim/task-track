@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Tracker</title>
+    <script src="./chart.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        padding-bottom: 200px;
+      }
+      header {
+        background-color: #4caf50;
+        color: white;
+        text-align: center;
+        padding: 10px 0;
+      }
+      nav {
+        display: flex;
+        justify-content: space-around;
+        background-color: #333;
+        padding: 10px;
+        column-gap: 5px;
+      }
+      nav button {
+        flex: 1;
+        background: none;
+        color: white;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s;
+      }
+      nav button:hover,
+      nav button.active {
+        background-color: #4caf50;
+      }
+      section {
+        display: none;
+        padding: 20px;
+      }
+      section.active {
+        display: block;
+      }
+      input,
+      select,
+      button {
+        margin: 5px 0;
+        padding: 10px;
+        font-size: 16px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      input:focus,
+      select:focus,
+      button:focus {
+        outline: 2px solid #4caf50;
+      }
+
+      .table-container {
+        width: 100%;
+        overflow-x: auto; /* Enables horizontal scrolling */
+        margin-top: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 600px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      th {
+        background-color: #4caf50;
+        color: white;
+        padding: 12px 15px;
+        text-align: center;
+        font-weight: bold;
+        min-width: 150px;
+      }
+
+      td {
+        padding: 10px 15px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+        min-width: 150px;
+      }
+
+      tr:hover {
+        background-color: #f1f1f1;
+      }
+
+      .empty-message {
+        text-align: center;
+        font-size: 18px;
+        color: #555;
+        margin: 20px 0;
+      }
+
+      .table-container::-webkit-scrollbar {
+        height: 8px;
+      }
+
+      .table-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+
+      .table-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+      .chart-container {
+        position: relative;
+        width: 100%;
+        max-width: 700px;
+        margin: auto;
+      }
+      .analytics-summary {
+        text-align: center;
+        margin: 20px auto;
+      }
+      .analytics-summary p {
+        font-size: 18px;
+        margin: 5px 0;
+      }
+      .red {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .blue {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      .green {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      @media (max-width: 768px) {
+        input,
+        select,
+        button {
+          font-size: 14px;
+        }
+        table,
+        th,
+        td {
+          font-size: 12px;
+        }
+        nav {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Task Tracker</h1>
+    </header>
+    <nav>
+      <button class="active" onclick="showTab('analyticsTab')">
+        Analytics
+      </button>
+      <button onclick="showTab('scoresTab')">Scores</button>
+
+      <button onclick="showTab('tasksTab')">Tasks</button>
+      <button onclick="showTab('dataTab')">Data Management</button>
+    </nav>
+    <section id="analyticsTab" class="active">
+      <h3>Analytics</h3>
+      <div class="analytics-summary">
+        <p id="totalDays">Total Days: 0</p>
+      </div>
+      <div class="chart-container">
+        <canvas id="taskAnalyticsChart"></canvas>
+      </div>
+    </section>
+    <section id="tasksTab">
+      <h3>Add Task</h3>
+      <input type="text" id="taskName" placeholder="Task Name" />
+      <input type="number" id="dailyTarget" placeholder="Daily Target" />
+      <button onclick="addTask()">Add Task</button>
+    </section>
+    <section id="scoresTab">
+      <h3>Add Daily Score</h3>
+      <select id="taskDropdownScores"></select>
+      <input type="number" id="dailyScore" placeholder="Score" />
+      <button onclick="addDailyScore()">Add Score</button>
+    </section>
+    <section id="dataTab">
+      <h3>Export and Import Data</h3>
+      <button onclick="exportData()">Export</button>
+      <button onclick="document.getElementById('importFile').click()">
+        Import
+      </button>
+      <input
+        type="file"
+        id="importFile"
+        style="display: none"
+        accept=".txt"
+        onchange="importData(event)"
+      />
+      <button onclick="clearStore()">Clear All Data</button>
+    </section>
+    <div class="table-container">
+      <table id="scoreTable">
+        <thead>
+          <tr>
+            <th>Day</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <script>
+      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+      const dailyScores = JSON.parse(localStorage.getItem("dailyScores")) || {};
+      function saveToLocalStorage() {
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        localStorage.setItem("dailyScores", JSON.stringify(dailyScores));
+      }
+      function addTask() {
+        const taskName = document.getElementById("taskName").value.trim();
+        const dailyTarget = Number(
+          document.getElementById("dailyTarget").value
+        );
+        if (taskName && dailyTarget) {
+          tasks.push({ name: taskName, target: dailyTarget });
+          saveToLocalStorage();
+          updateTaskDropdown();
+          updateTable();
+          updateAnalytics();
+          document.getElementById("taskName").value = "";
+          document.getElementById("dailyTarget").value = "";
+        }
+      }
+      function addDailyScore() {
+        const taskName = document.getElementById("taskDropdownScores").value;
+        const score = Number(document.getElementById("dailyScore").value);
+        const today = new Date().toISOString().split("T")[0];
+        if (taskName && score) {
+          if (!dailyScores[today]) dailyScores[today] = {};
+          dailyScores[today][taskName] = score;
+          saveToLocalStorage();
+          updateTable();
+          updateAnalytics();
+          document.getElementById("dailyScore").value = "";
+        }
+      }
+      function exportData() {
+        const data = JSON.stringify({ tasks, dailyScores });
+        const blob = new Blob([data], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "task_data.txt";
+        link.click();
+      }
+      function importData(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const data = JSON.parse(e.target.result);
+            localStorage.setItem("tasks", JSON.stringify(data.tasks));
+            localStorage.setItem(
+              "dailyScores",
+              JSON.stringify(data.dailyScores)
+            );
+            location.reload();
+          };
+          reader.readAsText(file);
+        }
+      }
+      function clearStore() {
+        localStorage.clear();
+        location.reload();
+      }
+      function updateTaskDropdown() {
+        const taskDropdownScores =
+          document.getElementById("taskDropdownScores");
+        taskDropdownScores.innerHTML = tasks
+          .map((task) => `<option value="${task.name}">${task.name}</option>`)
+          .join("");
+      }
+      function updateTable() {
+        const table = document.getElementById("scoreTable");
+        const tbody = table.querySelector("tbody");
+        const days = Object.keys(dailyScores).sort();
+        const taskNames = tasks.map((task) => task.name);
+
+        tbody.innerHTML = ""; // Clear the table body
+
+        if (taskNames.length === 0 || days.length === 0) {
+          // Handle the empty case
+          tbody.innerHTML = `
+      <tr>
+        <td colspan="${taskNames.length + 1}">
+          <p class="empty-message">No data available</p>
+        </td>
+      </tr>
+    `;
+          return;
+        }
+
+        // Update the table header
+        table.querySelector("thead").innerHTML = `
+    <tr>
+      <th>Day</th>
+      ${taskNames.map((name) => `<th>${name}</th>`).join("")}
+    </tr>
+  `;
+
+        // Populate the table rows
+        days.forEach((day) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${day}</td>`;
+          taskNames.forEach((taskName) => {
+            const score = dailyScores[day][taskName] || 0;
+            const target = tasks.find((task) => task.name === taskName).target;
+            const cellClass =
+              score < target ? "red" : score === target ? "blue" : "green";
+            row.innerHTML += `<td class="${cellClass}">${score}</td>`;
+          });
+          tbody.appendChild(row);
+        });
+      }
+      let taskAnalyticsChart; // Global variable to store the chart instance
+
+      function updateAnalytics() {
+        const daysCount = Object.keys(dailyScores).length;
+        document.getElementById(
+          "totalDays"
+        ).textContent = `Total Days: ${daysCount}`;
+
+        const taskData = tasks.map((task) => {
+          const taskName = task.name;
+          let redCount = 0,
+            blueCount = 0,
+            greenCount = 0;
+          Object.values(dailyScores).forEach((scores) => {
+            const score = scores[taskName] || 0;
+            if (score < task.target) redCount++;
+            else if (score === task.target) blueCount++;
+            else greenCount++;
+          });
+          return {
+            taskName,
+            redCount,
+            blueCount,
+            greenCount,
+          };
+        });
+
+        const chartLabels = taskData.map((task) => task.taskName);
+        const redData = taskData.map((task) => task.redCount);
+        const blueData = taskData.map((task) => task.blueCount);
+        const greenData = taskData.map((task) => task.greenCount);
+
+        const ctx = document
+          .getElementById("taskAnalyticsChart")
+          .getContext("2d");
+
+        // Destroy the existing chart if it exists
+        if (taskAnalyticsChart) {
+          taskAnalyticsChart.destroy();
+        }
+
+        // Create a new chart instance
+        taskAnalyticsChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: chartLabels,
+            datasets: [
+              { label: "Red", data: redData, backgroundColor: "#f8d7da" },
+              { label: "Blue", data: blueData, backgroundColor: "#d1ecf1" },
+              { label: "Green", data: greenData, backgroundColor: "#d4edda" },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: "top" },
+              title: { display: true, text: "Task Performance Overview" },
+            },
+          },
+        });
+      }
+      function showTab(tabId) {
+        document
+          .querySelectorAll("section")
+          .forEach((tab) => tab.classList.remove("active"));
+        document
+          .querySelectorAll("nav button")
+          .forEach((btn) => btn.classList.remove("active"));
+        document.getElementById(tabId).classList.add("active");
+        document
+          .querySelector(`nav button[onclick="showTab('${tabId}')"]`)
+          .classList.add("active");
+        if (tabId === "analyticsTab") updateAnalytics();
+      }
+      updateTaskDropdown();
+      updateTable();
+      updateAnalytics();
+    </script>
+  </body>
+</html>
