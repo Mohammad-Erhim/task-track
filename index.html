@@ -223,8 +223,42 @@
       </table>
     </div>
     <script>
-      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-      const dailyScores = JSON.parse(localStorage.getItem("dailyScores")) || {};
+      // Generate default tasks
+      const defaultTasks = Array.from({ length: 10 }, (_, i) => ({
+        name: `Task ${i + 1}`,
+        target: Math.floor(Math.random() * 5) + 1, // Random target between 1 and 5
+      }));
+
+      // Generate default daily scores
+      const startDate = new Date("2022-01-01");
+      const endDate = new Date("2024-01-15");
+
+      const defaultDailyScores = {};
+      while (startDate <= endDate) {
+        const date = startDate.toISOString().split("T")[0];
+        defaultDailyScores[date] = {};
+
+        defaultTasks.forEach((task) => {
+          const randomScore = Math.floor(Math.random() * (task.target + 3)); // Random score between 0 and target + 2
+          defaultDailyScores[date][task.name] = randomScore;
+        });
+
+        startDate.setDate(startDate.getDate() + 1); // Move to the next day
+      }
+
+      // Initialize tasks and dailyScores from localStorage or use default data
+      const tasks = JSON.parse(localStorage.getItem("tasks")) || defaultTasks;
+      const dailyScores =
+        JSON.parse(localStorage.getItem("dailyScores")) || defaultDailyScores;
+
+      // Save the default data to localStorage if it's not already present
+      if (!localStorage.getItem("tasks")) {
+        localStorage.setItem("tasks", JSON.stringify(defaultTasks));
+      }
+      if (!localStorage.getItem("dailyScores")) {
+        localStorage.setItem("dailyScores", JSON.stringify(defaultDailyScores));
+      }
+
       function saveToLocalStorage() {
         localStorage.setItem("tasks", JSON.stringify(tasks));
         localStorage.setItem("dailyScores", JSON.stringify(dailyScores));
@@ -295,7 +329,7 @@
       function updateTable() {
         const table = document.getElementById("scoreTable");
         const tbody = table.querySelector("tbody");
-        const days = Object.keys(dailyScores).sort();
+        const days = Object.keys(dailyScores).sort().reverse();
         const taskNames = tasks.map((task) => task.name);
 
         tbody.innerHTML = ""; // Clear the table body
