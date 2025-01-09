@@ -316,7 +316,9 @@
         }
       }
       function clearStore() {
-        localStorage.clear();
+        localStorage.setItem("tasks", JSON.stringify([]));
+        localStorage.setItem("dailyScores", JSON.stringify([]));
+
         location.reload();
       }
       function updateTaskDropdown() {
